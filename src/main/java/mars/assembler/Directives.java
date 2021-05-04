@@ -41,6 +41,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  **/
 
 public final class Directives {
+    private static final ArrayList directiveList = new ArrayList();
 
     public static final Directives DATA = new Directives(".data", "Subsequent items stored in Data segment at next available address");
     public static final Directives TEXT = new Directives(".text", "Subsequent items (instructions) stored in Text segment at next available address");
@@ -65,7 +66,6 @@ public final class Directives {
     public static final Directives END_MACRO = new Directives(".end_macro", "End macro definition.  See .macro");
     /*  INCLUDE added by DPS 11 Jan 2013 */
     public static final Directives INCLUDE = new Directives(".include", "Insert the contents of the specified file.  Put filename in quotes.");
-    private static final ArrayList directiveList = new ArrayList();
     private final String descriptor;
     private final String description; // help text
 
