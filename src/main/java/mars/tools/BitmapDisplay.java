@@ -9,6 +9,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.Observable;
 
 /*
@@ -54,11 +55,11 @@ public class BitmapDisplay extends AbstractMarsToolAndApplication {
     private final String[] visualizationUnitPixelHeightChoices = {"1", "2", "4", "8", "16", "32"};
     private final int defaultVisualizationUnitPixelHeightIndex = 0;
     private final String[] displayAreaPixelWidthChoices = {"64", "128", "256", "512", "1024"};
-    private final int defaultDisplayWidthIndex = 3;
+    private final int defaultDisplayWidthIndex = 1;
     private final String[] displayAreaPixelHeightChoices = {"64", "128", "256", "512", "1024"};
 
     // Values for Combo Boxes
-    private final int defaultDisplayHeightIndex = 2;
+    private final int defaultDisplayHeightIndex = 1;
     // Major GUI components
     private JComboBox visualizationUnitPixelWidthSelector, visualizationUnitPixelHeightSelector,
             visualizationPixelWidthSelector, visualizationPixelHeightSelector, displayBaseAddressSelector;
@@ -110,7 +111,13 @@ public class BitmapDisplay extends AbstractMarsToolAndApplication {
      * is no driver program to invoke the application.
      */
     public static void main(String[] args) {
-        new BitmapDisplay("Bitmap Display stand-alone, " + version, heading).go();
+        BitmapDisplay bitmapDisplay = new BitmapDisplay("Bitmap Display stand-alone, " + version, heading);
+        if (args.length >= 1) {
+            File fileToAssemble = new File(args[0]);
+            bitmapDisplay.go(fileToAssemble);
+        } else {
+            bitmapDisplay.go();
+        }
     }
 
 
@@ -412,7 +419,7 @@ public class BitmapDisplay extends AbstractMarsToolAndApplication {
         for (int i = 0; i < displayBaseAddressChoices.length; i++) {
             displayBaseAddressChoices[i] = mars.util.Binary.intToHexString(displayBaseAddressArray[i]) + descriptions[i];
         }
-        defaultBaseAddressIndex = 2;  // default to 0x10010000 (static data)
+        defaultBaseAddressIndex = 4;  // default to 0x10010000 (static data)
         baseAddress = displayBaseAddressArray[defaultBaseAddressIndex];
     }
 

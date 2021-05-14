@@ -13,7 +13,9 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -162,6 +164,18 @@ public abstract class AbstractMarsToolAndApplication extends JFrame implements M
         thisMarsApp.setLocationRelativeTo(null); // center on screen
         thisMarsApp.setVisible(true);
         initializePostGUI();
+    }
+
+    public void go(File fileToAssemble) {
+        mostRecentlyOpenedFile = fileToAssemble;
+        go();
+        operationStatusMessages.setText(fileToAssemble.getAbsolutePath());
+        operationStatusMessages.setCaretPosition(0);
+        assembleRunButton.setEnabled(true);
+        Arrays.stream(assembleRunButton.getActionListeners())
+                .forEach(actionListener -> {
+                    actionListener.actionPerformed(null);
+                });
     }
 
 
