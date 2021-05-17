@@ -1,5 +1,7 @@
 package mars.assembler
 
+import java.util.*
+
 enum class Directive(val directiveName: String, val description: String) {
     DATA(".data", "Subsequent items stored in Data segment at next available address"),
     TEXT(".text", "Subsequent items (instructions) stored in Text segment at next available address"),
@@ -21,5 +23,11 @@ enum class Directive(val directiveName: String, val description: String) {
     EQV(".eqv", "Substitute second operand for first. First operand is symbol, second operand is expression (like #define)"),
     MACRO(".macro", "Begin macro definition.  See .end_macro"),
     END_MACRO(".end_macro", "End macro definition.  See .macro"),
-    INCLUDE(".include", "Insert the contents of the specified file.  Put filename in quotes."),
+    INCLUDE(".include", "Insert the contents of the specified file.  Put filename in quotes.");
+
+    companion object {
+        fun getDirectiveFromToken(token: String): Directive {
+            return values().first { it.directiveName == token }
+        }
+    }
 }

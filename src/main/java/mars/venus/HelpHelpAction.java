@@ -1,7 +1,7 @@
 package mars.venus;
 
 import mars.Globals;
-import mars.assembler.Directives;
+import mars.assembler.DirectiveOld;
 import mars.mips.instructions.Instruction;
 
 import javax.swing.*;
@@ -290,10 +290,10 @@ public class HelpHelpAction extends GuiAction {
     private JScrollPane createMipsDirectivesHelpPane() {
         Vector exampleList = new Vector();
         String blanks = "            ";  // 12 blanks
-        Directives direct;
-        Iterator it = Directives.getDirectiveList().iterator();
+        DirectiveOld direct;
+        Iterator it = DirectiveOld.getDirectiveList().iterator();
         while (it.hasNext()) {
-            direct = (Directives) it.next();
+            direct = (DirectiveOld) it.next();
             exampleList.add(direct.toString()
                     + blanks.substring(0, Math.max(0, blanks.length() - direct.toString().length()))
                     + direct.getDescription());

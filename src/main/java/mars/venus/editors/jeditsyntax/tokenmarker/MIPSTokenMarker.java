@@ -9,7 +9,7 @@
 
 package mars.venus.editors.jeditsyntax.tokenmarker;
 
-import mars.assembler.Directives;
+import mars.assembler.DirectiveOld;
 import mars.mips.instructions.BasicInstruction;
 import mars.mips.instructions.Instruction;
 import mars.venus.editors.jeditsyntax.KeywordMap;
@@ -93,9 +93,9 @@ public class MIPSTokenMarker extends TokenMarker {
                 cKeywords.add(((mars.mips.instructions.Instruction) instructionSet.get(i)).getName(), Token.KEYWORD1);
             }
             // add assembler directives
-            java.util.ArrayList directiveSet = mars.assembler.Directives.getDirectiveList();
+            java.util.ArrayList directiveSet = DirectiveOld.getDirectiveList();
             for (int i = 0; i < directiveSet.size(); i++) {
-                cKeywords.add(((mars.assembler.Directives) directiveSet.get(i)).getName(), Token.KEYWORD2);
+                cKeywords.add(((DirectiveOld) directiveSet.get(i)).getName(), Token.KEYWORD2);
             }
             // add integer register file
             mars.mips.hardware.Register[] registerFile = mars.mips.hardware.RegisterFile.getRegisters();
@@ -281,7 +281,7 @@ public class MIPSTokenMarker extends TokenMarker {
             }
         }
         if (token != null && token.id == Token.KEYWORD2) {
-            Directives dir = Directives.matchDirective(tokenText);
+            DirectiveOld dir = DirectiveOld.matchDirective(tokenText);
             if (dir != null) {
                 matches = new ArrayList();
                 matches.add(new PopupHelpItem(tokenText, dir.getName(), dir.getDescription()));
@@ -412,18 +412,18 @@ public class MIPSTokenMarker extends TokenMarker {
         ArrayList matches = null;
         ArrayList directiveMatches = null;
         if (exact) {
-            Object dir = Directives.matchDirective(tokenText);
+            Object dir = DirectiveOld.matchDirective(tokenText);
             if (dir != null) {
                 directiveMatches = new ArrayList();
                 directiveMatches.add(dir);
             }
         } else {
-            directiveMatches = Directives.prefixMatchDirectives(tokenText);
+            directiveMatches = DirectiveOld.prefixMatchDirectives(tokenText);
         }
         if (directiveMatches != null) {
             matches = new ArrayList();
             for (int i = 0; i < directiveMatches.size(); i++) {
-                Directives direct = (Directives) directiveMatches.get(i);
+                DirectiveOld direct = (DirectiveOld) directiveMatches.get(i);
                 matches.add(new PopupHelpItem(tokenText, direct.getName(), direct.getDescription(), exact));
             }
         }

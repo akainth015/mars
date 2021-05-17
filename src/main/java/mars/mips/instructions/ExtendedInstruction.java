@@ -2,6 +2,7 @@ package mars.mips.instructions;
 
 import mars.Globals;
 import mars.MIPSprogram;
+import mars.Settings;
 import mars.assembler.Symbol;
 import mars.assembler.TokenList;
 import mars.mips.hardware.Coprocessor1;
@@ -51,8 +52,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 public class ExtendedInstruction extends Instruction {
 
-    private final ArrayList translationStrings;
-    private final ArrayList compactTranslationStrings;
+    private final ArrayList<String> translationStrings;
+    private final ArrayList<String> compactTranslationStrings;
 
     /**
      * Constructor for ExtendedInstruction.
@@ -149,7 +150,7 @@ public class ExtendedInstruction extends Instruction {
      * </UL>
      *
      * @param template  a String containing template for basic statement.
-     * @param tokenList a TokenList containing tokens from extended instruction.
+     * @param theTokenList a TokenList containing tokens from extended instruction.
      * @return String representing basic assembler statement.
      */
 
@@ -162,8 +163,8 @@ public class ExtendedInstruction extends Instruction {
         //This is the goal, but it leads to a cascade of
         // additional changes, so for now I will generate "nop" in either case, then come back to it for the
         // next major release.
-        if (instruction.indexOf("DBNOP") >= 0) {
-            return Globals.getSettings().getDelayedBranchingEnabled() ? "nop" : "";
+        if (instruction.contains("DBNOP")) {
+            return Globals.getSettings().getBooleanSetting(Settings.DELAYED_BRANCHING_ENABLED) ? "nop" : "";
         }
         // substitute first operand token for template's RG1 or OP1, second for RG2 or OP2, etc
         for (int op = 1; op < theTokenList.size(); op++) {
@@ -187,7 +188,7 @@ public class ExtendedInstruction extends Instruction {
             }
             // substitute upper 16 bits of label address
             // NOTE: form LHnPm will not match here since it is discovered and substituted above.
-            if (instruction.indexOf("LH" + op) >= 0) {
+            if (instruction.contains("LH" + op)) {
                 // Label, last operand, has already been translated to address by symtab lookup
                 String label = theTokenList.get(op).getValue();
                 int addr = 0;
@@ -262,7 +263,7 @@ public class ExtendedInstruction extends Instruction {
             }
             // substitute upper 16 bits of value, adjusted if necessary (see "extra" below)
             // NOTE: if VHnPm appears it will not match here; already substituted by code above
-            if (instruction.indexOf("VH" + op) >= 0) {
+            if (instruction.contains("VH" + op)) {
                 String value = theTokenList.get(op).getValue();
                 int val = 0;
                 try {
@@ -307,7 +308,7 @@ public class ExtendedInstruction extends Instruction {
                 }
             }
             // substitute upper 16 bits of 32 bit value
-            if (instruction.indexOf("VHL" + op) >= 0) {
+            if (instruction.contains("VHL" + op)) {
                 // value has to be second operand token.
                 String value = theTokenList.get(op).getValue(); // has to be token 2 position
                 int val = 0;
@@ -320,7 +321,7 @@ public class ExtendedInstruction extends Instruction {
             }
         }
         // substitute upper 16 bits of label address for "la"
-        if (instruction.indexOf("LHL") >= 0) {
+        if (instruction.contains("LHL")) {
             // Label has already been translated to address by symtab lookup
             String label = theTokenList.get(2).getValue();  // has to be token 2 position
             int addr = 0;
@@ -355,7 +356,7 @@ public class ExtendedInstruction extends Instruction {
         // substitute upper 16 bits of label address after adding constant e.g. here+4($s0)
         // Address will be resolved using addition, so need to add 1 to upper half if bit 15 is 1.
         // NOTE: format LHPAPm is recognized and substituted by the code above.
-        if (instruction.indexOf("LHPA") >= 0) {
+        if (instruction.contains("LHPA")) {
             // Label has already been translated to address by symtab lookup
             String label = theTokenList.get(2).getValue();  // 2 is only possible token position
             String addend = theTokenList.get(4).getValue();  // 4 is only possible token position
@@ -374,7 +375,7 @@ public class ExtendedInstruction extends Instruction {
         // substitute upper 16 bits of label address after adding constant e.g. here+4($s0)
         // Address will be resolved using "ori", so DO NOT adjust upper 16 if bit 15 is 1.
         // This only happens in the "la" (load address) instruction.
-        if (instruction.indexOf("LHPN") >= 0) {
+        if (instruction.contains("LHPN")) {
             // Label has already been translated to address by symtab lookup
             String label = theTokenList.get(2).getValue();  // 2 is only possible token position
             String addend = theTokenList.get(4).getValue();  // 4 is only possible token position
@@ -432,13 +433,13 @@ public class ExtendedInstruction extends Instruction {
                 String disabled = instruction.substring(index + 5, index + 6);
                 String enabled = instruction.substring(index + 6, index + 7);
                 instruction = substitute(instruction, "BROFF" + disabled + enabled,
-                        Globals.getSettings().getDelayedBranchingEnabled() ? enabled : disabled);
+                        Globals.getSettings().getBooleanSetting(Settings.DELAYED_BRANCHING_ENABLED) ? enabled : disabled);
             } catch (IndexOutOfBoundsException iooe) {
                 instruction = substitute(instruction, "BROFF", "BAD_PSEUDO_OP_SPEC");
             }
         }
         // substitute Next higher Register for registers in token list (for "mfc1.d","mtc1.d")
-        if (instruction.indexOf("NR") >= 0) {
+        if (instruction.contains("NR")) {
             for (int op = 1; op < theTokenList.size(); op++) {
                 String token = theTokenList.get(op).getValue();
                 int regNumber;
@@ -457,7 +458,7 @@ public class ExtendedInstruction extends Instruction {
         }
 
         // substitute result of subtracting last token from 32 (rol and ror constant rotate amount)
-        if (instruction.indexOf("S32") >= 0) {
+        if (instruction.contains("S32")) {
             String value = theTokenList.get(theTokenList.size() - 1).getValue();
             int val = 0;
             try {
@@ -469,7 +470,7 @@ public class ExtendedInstruction extends Instruction {
         }
 
         // substitute label if necessary
-        if (instruction.indexOf("LAB") >= 0) {
+        if (instruction.contains("LAB")) {
             // label has to be last token.  It has already been translated to address
             // by symtab lookup, so I need to get the text label back so parseLine() won't puke.
             String label = theTokenList.get(theTokenList.size() - 1).getValue();
@@ -491,7 +492,7 @@ public class ExtendedInstruction extends Instruction {
     // do this directly but I wanted to stay 1.4 compatible.
     // Modified 12 July 2006 to "substitute all occurances", not just the first.
     private static String substitute(String original, String find, String replacement) {
-        if (original.indexOf(find) < 0 || find.equals(replacement)) {
+        if (!original.contains(find) || find.equals(replacement)) {
             return original;  // second condition prevents infinite loop below
         }
         int i;
@@ -506,7 +507,7 @@ public class ExtendedInstruction extends Instruction {
     // Java 1.5 adds an overloaded String.replace method to do this directly but I
     // wanted to stay 1.4 compatible.
     private static String substituteFirst(String original, String find, String replacement) {
-        if (original.indexOf(find) < 0 || find.equals(replacement)) {
+        if (!original.contains(find) || find.equals(replacement)) {
             return original;  // second condition prevents infinite loop below
         }
         int i;
@@ -537,7 +538,7 @@ public class ExtendedInstruction extends Instruction {
      * @return ArrayList of Strings.
      */
 
-    public ArrayList getBasicIntructionTemplateList() {
+    public ArrayList<String> getBasicIntructionTemplateList() {
         return translationStrings;
     }
 
@@ -575,7 +576,7 @@ public class ExtendedInstruction extends Instruction {
      * have a compact alternative.
      */
 
-    public ArrayList getCompactBasicIntructionTemplateList() {
+    public ArrayList<String> getCompactBasicIntructionTemplateList() {
         return compactTranslationStrings;
     }
 
@@ -584,11 +585,11 @@ public class ExtendedInstruction extends Instruction {
     // expands to, which is a string, and breaks out into separate
     // instructions.  They are separated by '\n' character.
 
-    private ArrayList buildTranslationList(String translation) {
+    private ArrayList<String> buildTranslationList(String translation) {
         if (translation == null || translation.length() == 0) {
             return null;
         }
-        ArrayList translationList = new ArrayList();
+        ArrayList<String> translationList = new ArrayList<>();
         StringTokenizer st = new StringTokenizer(translation, "\n");
         while (st.hasMoreTokens()) {
             translationList.add(st.nextToken());
@@ -605,7 +606,7 @@ public class ExtendedInstruction extends Instruction {
      * Returns length in bytes of corresponding binary instruction(s).
      * Returns 0 if the ArrayList is null or empty.
      */
-    private int getInstructionLength(ArrayList translationList) {
+    private int getInstructionLength(ArrayList<String> translationList) {
         if (translationList == null || translationList.size() == 0) {
             return 0;
         }
@@ -613,8 +614,8 @@ public class ExtendedInstruction extends Instruction {
         // if Delayed branching is enabled.  Otherwise generate nothing.  If generating nothing,
         // then don't count the nop in the instruction length.   DPS 23-Jan-2008
         int instructionCount = 0;
-        for (int i = 0; i < translationList.size(); i++) {
-            if (((String) translationList.get(i)).indexOf("DBNOP") >= 0 && !Globals.getSettings().getDelayedBranchingEnabled())
+        for (String s : translationList) {
+            if (s.contains("DBNOP") && !Globals.getSettings().getBooleanSetting(Settings.DELAYED_BRANCHING_ENABLED))
                 continue;
             instructionCount++;
         }

@@ -215,7 +215,7 @@ public final class TokenTypes {
             return TokenTypes.OPERATOR;
 
         // See if it is a directive
-        if (value.charAt(0) == '.' && Directives.matchDirective(value) != null) {
+        if (value.charAt(0) == '.' && DirectiveOld.matchDirective(value) != null) {
             return TokenTypes.DIRECTIVE;
         }
 

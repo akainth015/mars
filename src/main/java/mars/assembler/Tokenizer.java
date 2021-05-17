@@ -88,12 +88,12 @@ public class Tokenizer {
      * that represents a tokenized source statement from the MIPS program.
      **/
 
-    public ArrayList tokenize(MIPSprogram p) throws ProcessingException {
+    public ArrayList<TokenList> tokenize(MIPSprogram p) throws ProcessingException {
         sourceMIPSprogram = p;
-        equivalents = new HashMap<String, String>(); // DPS 11-July-2012
-        ArrayList tokenList = new ArrayList();
+        equivalents = new HashMap<>(); // DPS 11-July-2012
+        ArrayList<TokenList> tokenList = new ArrayList<>();
         //ArrayList source = p.getSourceList();
-        ArrayList<SourceLine> source = processIncludes(p, new HashMap<String, String>()); // DPS 9-Jan-2013
+        ArrayList<SourceLine> source = processIncludes(p, new HashMap<>()); // DPS 9-Jan-2013
         p.setSourceLineList(source);
         TokenList currentLineTokens;
         String sourceLine;
@@ -125,14 +125,14 @@ public class Tokenizer {
     // includes both direct and indirect.
     // DPS 11-Jan-2013
     private ArrayList<SourceLine> processIncludes(MIPSprogram program, Map<String, String> inclFiles) throws ProcessingException {
-        ArrayList source = program.getSourceList();
-        ArrayList<SourceLine> result = new ArrayList<SourceLine>(source.size());
+        ArrayList<String> source = program.getSourceList();
+        ArrayList<SourceLine> result = new ArrayList<>(source.size());
         for (int i = 0; i < source.size(); i++) {
-            String line = (String) source.get(i);
+            String line = source.get(i);
             TokenList tl = tokenizeLine(program, i + 1, line, false);
             boolean hasInclude = false;
             for (int ii = 0; ii < tl.size(); ii++) {
-                if (tl.get(ii).getValue().equalsIgnoreCase(Directives.INCLUDE.getName())
+                if (tl.get(ii).getValue().equalsIgnoreCase(DirectiveOld.INCLUDE.getName())
                         && (tl.size() > ii + 1)
                         && tl.get(ii + 1).getType() == TokenTypes.QUOTED_STRING) {
                     String filename = tl.get(ii + 1).getValue();
@@ -183,7 +183,7 @@ public class Tokenizer {
      **/
 
     public TokenList tokenizeExampleInstruction(String example) throws ProcessingException {
-        TokenList result = new TokenList();
+        TokenList result;
         result = tokenizeLine(sourceMIPSprogram, 0, example, false);
         if (errors.errorsOccurred()) {
             throw new ProcessingException(errors);
@@ -250,7 +250,7 @@ public class Tokenizer {
      * @param lineNum          line number from source code (used in error message)
      * @param theLine          String containing source code
      * @param callerErrorList  errors will go into this list instead of tokenizer's list.
-     * @param doEqvSubstitutse boolean param set true to perform .eqv substitutions, else false
+     * @param doEqvSubstitutes boolean param set true to perform .eqv substitutions, else false
      * @return the generated token list for that line
      **/
     public TokenList tokenizeLine(int lineNum, String theLine, ErrorList callerErrorList, boolean doEqvSubstitutes) {
@@ -273,7 +273,6 @@ public class Tokenizer {
      * @return the generated token list for that line
      **/
     public TokenList tokenizeLine(MIPSprogram program, int lineNum, String theLine, boolean doEqvSubstitutes) {
-        TokenTypes tokenType;
         TokenList result = new TokenList();
         if (theLine.length() == 0)
             return result;
@@ -302,7 +301,6 @@ public class Tokenizer {
                     case '#':  // # denotes comment that takes remainder of line
                         if (tokenPos > 0) {
                             this.processCandidateToken(token, program, lineNum, theLine, tokenPos, tokenStartPos, result);
-                            tokenPos = 0;
                         }
                         tokenStartPos = linePos + 1;
                         tokenPos = line.length - linePos;
@@ -432,7 +430,6 @@ public class Tokenizer {
         }  // while
         if (tokenPos > 0) {
             this.processCandidateToken(token, program, lineNum, theLine, tokenPos, tokenStartPos, result);
-            tokenPos = 0;
         }
         if (doEqvSubstitutes) {
             result = processEqv(program, lineNum, theLine, result); // DPS 11-July-2012
@@ -453,19 +450,19 @@ public class Tokenizer {
         if (tokens.size() > 2 && (tokens.get(0).getType() == TokenTypes.DIRECTIVE || tokens.get(2).getType() == TokenTypes.DIRECTIVE)) {
             // There should not be a label but if there is, the directive is in token position 2 (ident, colon, directive).
             int dirPos = (tokens.get(0).getType() == TokenTypes.DIRECTIVE) ? 0 : 2;
-            if (Directives.matchDirective(tokens.get(dirPos).getValue()) == Directives.EQV) {
+            if (DirectiveOld.matchDirective(tokens.get(dirPos).getValue()) == DirectiveOld.EQV) {
                 // Get position in token list of last non-comment token
                 int tokenPosLastOperand = tokens.size() - ((tokens.get(tokens.size() - 1).getType() == TokenTypes.COMMENT) ? 2 : 1);
                 // There have to be at least two non-comment tokens beyond the directive
                 if (tokenPosLastOperand < dirPos + 2) {
                     errors.add(new ErrorMessage(program, lineNum, tokens.get(dirPos).getStartPos(),
-                            "Too few operands for " + Directives.EQV.getName() + " directive"));
+                            "Too few operands for " + DirectiveOld.EQV.getName() + " directive"));
                     return tokens;
                 }
                 // Token following the directive has to be IDENTIFIER
                 if (tokens.get(dirPos + 1).getType() != TokenTypes.IDENTIFIER) {
                     errors.add(new ErrorMessage(program, lineNum, tokens.get(dirPos).getStartPos(),
-                            "Malformed " + Directives.EQV.getName() + " directive"));
+                            "Malformed " + DirectiveOld.EQV.getName() + " directive"));
                     return tokens;
                 }
                 String symbol = tokens.get(dirPos + 1).getValue();
@@ -474,7 +471,7 @@ public class Tokenizer {
                 for (int i = dirPos + 2; i < tokens.size(); i++) {
                     if (tokens.get(i).getValue().equals(symbol)) {
                         errors.add(new ErrorMessage(program, lineNum, tokens.get(dirPos).getStartPos(),
-                                "Cannot substitute " + symbol + " for itself in " + Directives.EQV.getName() + " directive"));
+                                "Cannot substitute " + symbol + " for itself in " + DirectiveOld.EQV.getName() + " directive"));
                         return tokens;
                     }
                 }
@@ -535,7 +532,6 @@ public class Tokenizer {
         }
         Token toke = new Token(type, value, program, line, tokenStartPos);
         tokenList.add(toke);
-        return;
     }
 
 
@@ -563,7 +559,7 @@ public class Tokenizer {
                 if (intValue >= 0 && intValue <= 255) {
                     return Integer.toString(intValue);
                 }
-            } catch (NumberFormatException nfe) {
+            } catch (NumberFormatException ignored) {
             } // if not valid octal, will fall through and reject
         }
         return value;

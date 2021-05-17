@@ -51,21 +51,19 @@ import java.util.Comparator;
  **/
 
 public class Assembler {
-    private ArrayList machineList;
     private ErrorList errors;
     private boolean inDataSegment; // status maintained by parser
     private boolean inMacroSegment; // status maintained by parser, true if in
     // macro definition segment
     private int externAddress;
     private boolean autoAlign;
-    private Directives currentDirective;
-    private Directives dataDirective;
+    private Directive currentDirective;
+    private Directive dataDirective;
     private MIPSprogram fileCurrentlyBeingAssembled;
     private TokenList globalDeclarationList;
     private UserKernelAddressSpace textAddress;
     private UserKernelAddressSpace dataAddress;
-    private DataSegmentForwardReferences currentFileDataSegmentForwardReferences,
-            accumulatedDataSegmentForwardReferences;
+    private DataSegmentForwardReferences currentFileDataSegmentForwardReferences;
 
     /**
      * Parse and generate machine code for the given MIPS program. It must have
@@ -81,7 +79,7 @@ public class Assembler {
      * statement.
      * @see ProgramStatement
      **/
-    public ArrayList assemble(MIPSprogram p, boolean extendedAssemblerEnabled)
+    public ArrayList<?> assemble(MIPSprogram p, boolean extendedAssemblerEnabled)
             throws ProcessingException {
         return assemble(p, extendedAssemblerEnabled, false);
     }
@@ -104,9 +102,9 @@ public class Assembler {
      * statement.
      * @see ProgramStatement
      **/
-    public ArrayList assemble(MIPSprogram p, boolean extendedAssemblerEnabled,
+    public ArrayList<ProgramStatement> assemble(MIPSprogram p, boolean extendedAssemblerEnabled,
                               boolean warningsAreErrors) throws ProcessingException {
-        ArrayList programFiles = new ArrayList();
+        ArrayList<MIPSprogram> programFiles = new ArrayList<>();
         programFiles.add(p);
         return this.assemble(programFiles, extendedAssemblerEnabled, warningsAreErrors);
     }
@@ -136,7 +134,7 @@ public class Assembler {
      * statement. Returns null if incoming array list is null or empty.
      * @see ProgramStatement
      **/
-    public ArrayList assemble(ArrayList tokenizedProgramFiles, boolean extendedAssemblerEnabled)
+    public ArrayList<? extends ProgramStatement> assemble(ArrayList<MIPSprogram> tokenizedProgramFiles, boolean extendedAssemblerEnabled)
             throws ProcessingException {
         return assemble(tokenizedProgramFiles, extendedAssemblerEnabled, false);
     }
@@ -160,8 +158,8 @@ public class Assembler {
      * statement. Returns null if incoming array list is null or empty.
      * @see ProgramStatement
      **/
-    public ArrayList assemble(ArrayList tokenizedProgramFiles, boolean extendedAssemblerEnabled,
-                              boolean warningsAreErrors) throws ProcessingException {
+    public ArrayList<ProgramStatement> assemble(ArrayList<MIPSprogram> tokenizedProgramFiles, boolean extendedAssemblerEnabled,
+                                                          boolean warningsAreErrors) throws ProcessingException {
 
         if (tokenizedProgramFiles == null || tokenizedProgramFiles.size() == 0)
             return null;
@@ -171,10 +169,10 @@ public class Assembler {
                 Memory.kernelDataBaseAddress);
         externAddress = Memory.externBaseAddress;
         currentFileDataSegmentForwardReferences = new DataSegmentForwardReferences();
-        accumulatedDataSegmentForwardReferences = new DataSegmentForwardReferences();
+        DataSegmentForwardReferences accumulatedDataSegmentForwardReferences = new DataSegmentForwardReferences();
         Globals.symbolTable.clear();
         Globals.memory.clear();
-        this.machineList = new ArrayList();
+        ArrayList<ProgramStatement> machineList = new ArrayList<>();
         this.errors = new ErrorList();
         if (Globals.debug)
             System.out.println("Assembler first pass begins:");
@@ -182,10 +180,10 @@ public class Assembler {
         // TO SECOND PASS. THIS ASSURES ALL SYMBOL TABLES ARE CORRECTLY BUILT.
         // THERE IS ONE GLOBAL SYMBOL TABLE (for identifiers declared .globl) PLUS
         // ONE LOCAL SYMBOL TABLE FOR EACH SOURCE FILE.
-        for (int fileIndex = 0; fileIndex < tokenizedProgramFiles.size(); fileIndex++) {
+        for (MIPSprogram tokenizedProgramFile : tokenizedProgramFiles) {
             if (errors.errorLimitExceeded())
                 break;
-            this.fileCurrentlyBeingAssembled = (MIPSprogram) tokenizedProgramFiles.get(fileIndex);
+            this.fileCurrentlyBeingAssembled = tokenizedProgramFile;
             // List of labels declared ".globl". new list for each file assembled
             this.globalDeclarationList = new TokenList();
             // Parser begins by default in text segment until directed otherwise.
@@ -196,7 +194,7 @@ public class Assembler {
             // This can be turned off for remainder of current data segment with ".align 0"
             this.autoAlign = true;
             // Default data directive is .word for 4 byte data items
-            this.dataDirective = Directives.WORD;
+            this.dataDirective = Directive.WORD;
             // Clear out (initialize) symbol table related structures.
             fileCurrentlyBeingAssembled.getLocalSymbolTable().clear();
             currentFileDataSegmentForwardReferences.clear();
@@ -204,8 +202,8 @@ public class Assembler {
             // tokenList is an ArrayList of TokenList objects, one per source line;
             // each ArrayList in tokenList consists of Token objects.
             ArrayList<SourceLine> sourceLineList = fileCurrentlyBeingAssembled.getSourceLineList();
-            ArrayList tokenList = fileCurrentlyBeingAssembled.getTokenList();
-            ArrayList parsedList = fileCurrentlyBeingAssembled.createParsedList();
+            ArrayList<TokenList> tokenList = fileCurrentlyBeingAssembled.getTokenList();
+            ArrayList<ProgramStatement> parsedList = fileCurrentlyBeingAssembled.createParsedList();
             // each file keeps its own macro definitions
             MacroPool macroPool = fileCurrentlyBeingAssembled.createMacroPool();
             // FIRST PASS OF ASSEMBLER VERIFIES SYNTAX, GENERATES SYMBOL TABLE,
@@ -214,12 +212,12 @@ public class Assembler {
             for (int i = 0; i < tokenList.size(); i++) {
                 if (errors.errorLimitExceeded())
                     break;
-                for (int z = 0; z < ((TokenList) tokenList.get(i)).size(); z++) {
-                    Token t = ((TokenList) tokenList.get(i)).get(z);
+                for (int z = 0; z < tokenList.get(i).size(); z++) {
+                    Token t = tokenList.get(i).get(z);
                     // record this token's original source program and line #. Differs from final, if .include used
                     t.setOriginal(sourceLineList.get(i).getMIPSprogram(), sourceLineList.get(i).getLineNumber());
                 }
-                statements = this.parseLine((TokenList) tokenList.get(i),
+                statements = this.parseLine(tokenList.get(i),
                         sourceLineList.get(i).getSource(),
                         sourceLineList.get(i).getLineNumber(),
                         extendedAssemblerEnabled);
@@ -260,20 +258,20 @@ public class Assembler {
             System.out.println("Assembler second pass begins");
         // SECOND PASS OF ASSEMBLER GENERATES BASIC ASSEMBLER THEN MACHINE CODE.
         // Generates basic assembler statements...
-        for (int fileIndex = 0; fileIndex < tokenizedProgramFiles.size(); fileIndex++) {
+        for (MIPSprogram tokenizedProgramFile : tokenizedProgramFiles) {
             if (errors.errorLimitExceeded())
                 break;
-            this.fileCurrentlyBeingAssembled = (MIPSprogram) tokenizedProgramFiles.get(fileIndex);
-            ArrayList parsedList = fileCurrentlyBeingAssembled.getParsedList();
+            this.fileCurrentlyBeingAssembled = (MIPSprogram) tokenizedProgramFile;
+            ArrayList<ProgramStatement> parsedList = fileCurrentlyBeingAssembled.getParsedList();
             ProgramStatement statement;
-            for (int i = 0; i < parsedList.size(); i++) {
-                statement = (ProgramStatement) parsedList.get(i);
+            for (ProgramStatement programStatement : parsedList) {
+                statement = (ProgramStatement) programStatement;
                 statement.buildBasicStatementFromBasicInstruction(errors);
                 if (errors.errorsOccurred()) {
                     throw new ProcessingException(errors);
                 }
                 if (statement.getInstruction() instanceof BasicInstruction) {
-                    this.machineList.add(statement);
+                    machineList.add(statement);
                 } else {
                     // It is a pseudo-instruction:
                     // 1. Fetch its basic instruction template list
@@ -334,7 +332,7 @@ public class Assembler {
                         // statement, add to list.
                         TokenList newTokenList = new Tokenizer().tokenizeLine(sourceLine,
                                 instruction, errors, false);
-                        ArrayList instrMatches = this.matchInstruction(newTokenList.get(0));
+                        ArrayList<? extends Object> instrMatches = this.matchInstruction(newTokenList.get(0));
                         Instruction instr = OperandFormat.bestOperandMatch(newTokenList,
                                 instrMatches);
                         // Only first generated instruction is linked to original source
@@ -344,7 +342,7 @@ public class Assembler {
                                 newTokenList, instr, textAddress.get(), statement.getSourceLine());
                         textAddress.increment(Instruction.INSTRUCTION_LENGTH);
                         ps.buildBasicStatementFromBasicInstruction(errors);
-                        this.machineList.add(ps);
+                        machineList.add(ps);
                     } // end of FOR loop, repeated for each template in list.
                 } // end of ELSE part for extended instruction.
 
@@ -356,10 +354,10 @@ public class Assembler {
         // Generates machine code statements from the list of basic assembler statements
         // and writes the statement to memory.
         ProgramStatement statement;
-        for (int i = 0; i < this.machineList.size(); i++) {
+        for (int i = 0; i < machineList.size(); i++) {
             if (errors.errorLimitExceeded())
                 break;
-            statement = (ProgramStatement) this.machineList.get(i);
+            statement = machineList.get(i);
             statement.buildMachineStatementFromBasicStatement(errors);
             if (Globals.debug)
                 System.out.println(statement);
@@ -384,21 +382,21 @@ public class Assembler {
         // Such occurances will be flagged as errors.
         // Yes, I would not have to sort here if I used SortedSet rather than ArrayList
         // but in case of duplicate I like having both statements handy for error message.
-        Collections.sort(this.machineList, new ProgramStatementComparator());
-        catchDuplicateAddresses(this.machineList, errors);
+        Collections.sort(machineList, new ProgramStatementComparator());
+        catchDuplicateAddresses(machineList, errors);
         if (errors.errorsOccurred() || errors.warningsOccurred() && warningsAreErrors) {
             throw new ProcessingException(errors);
         }
-        return this.machineList;
+        return machineList;
     } // assemble()
 
     // //////////////////////////////////////////////////////////////////////
     // Will check for duplicate text addresses, which can happen inadvertantly when using
     // operand on .text directive. Will generate error message for each one that occurs.
-    private void catchDuplicateAddresses(ArrayList instructions, ErrorList errors) {
+    private void catchDuplicateAddresses(ArrayList<ProgramStatement> instructions, ErrorList errors) {
         for (int i = 0; i < instructions.size() - 1; i++) {
-            ProgramStatement ps1 = (ProgramStatement) instructions.get(i);
-            ProgramStatement ps2 = (ProgramStatement) instructions.get(i + 1);
+            ProgramStatement ps1 = instructions.get(i);
+            ProgramStatement ps2 = instructions.get(i + 1);
             if (ps1.getAddress() == ps2.getAddress()) {
                 errors.add(new ErrorMessage(ps2.getSourceMIPSprogram(), ps2.getSourceLine(), 0,
                         "Duplicate text segment address: "
@@ -554,7 +552,7 @@ public class Assembler {
         // is not
         // yet implemented.
         if (!this.inDataSegment) {
-            ArrayList instrMatches = this.matchInstruction(token);
+            ArrayList<? extends Object> instrMatches = this.matchInstruction(token);
             if (instrMatches == null)
                 return ret;
             // OK, we've got an operator match, let's check the operands.
@@ -666,17 +664,12 @@ public class Assembler {
     // This source code line is a directive, not a MIPS instruction. Let's carry it out.
     private void executeDirective(TokenList tokens) {
         Token token = tokens.get(0);
-        Directives direct = Directives.matchDirective(token.getValue());
+        Directive direct = Directive.Companion.getDirectiveFromToken(token.getValue());
         if (Globals.debug)
             System.out.println("line " + token.getSourceLine() + " is directive " + direct);
-        if (direct == null) {
-            errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token.getSourceLine(), token
-                    .getStartPos(), "\"" + token.getValue()
-                    + "\" directive is invalid or not implemented in MARS"));
-            return;
-        } else if (direct == Directives.EQV) { /* EQV added by DPS 11 July 2012 */
+        if (direct == Directive.EQV) { /* EQV added by DPS 11 July 2012 */
             // Do nothing.  This was vetted and processed during tokenizing.
-        } else if (direct == Directives.MACRO) {
+        } else if (direct == Directive.MACRO) {
             if (tokens.size() < 2) {
                 errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token.getSourceLine(),
                         token.getStartPos(), "\"" + token.getValue()
@@ -709,7 +702,7 @@ public class Assembler {
                 }
                 pool.getCurrent().addArg(arg.getValue());
             }
-        } else if (direct == Directives.END_MACRO) {
+        } else if (direct == Directive.END_MACRO) {
             if (tokens.size() > 1) {
                 errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token.getSourceLine(),
                         token.getStartPos(), "invalid text after .END_MACRO"));
@@ -724,36 +717,35 @@ public class Assembler {
             fileCurrentlyBeingAssembled.getLocalMacroPool().commitMacro(token);
         } else if (inMacroSegment) {
             // should not parse lines even directives in macro segment
-            return;
-        } else if (direct == Directives.DATA || direct == Directives.KDATA) {
+        } else if (direct == Directive.DATA || direct == Directive.KDATA) {
             this.inDataSegment = true;
             this.autoAlign = true;
-            this.dataAddress.setAddressSpace((direct == Directives.DATA) ? this.dataAddress.USER
+            this.dataAddress.setAddressSpace((direct == Directive.DATA) ? this.dataAddress.USER
                     : this.dataAddress.KERNEL);
             if (tokens.size() > 1 && TokenTypes.isIntegerTokenType(tokens.get(1).getType())) {
                 this.dataAddress.set(Binary.stringToInt(tokens.get(1).getValue())); // KENV 1/6/05
             }
-        } else if (direct == Directives.TEXT || direct == Directives.KTEXT) {
+        } else if (direct == Directive.TEXT || direct == Directive.KTEXT) {
             this.inDataSegment = false;
-            this.textAddress.setAddressSpace((direct == Directives.TEXT) ? this.textAddress.USER
+            this.textAddress.setAddressSpace((direct == Directive.TEXT) ? this.textAddress.USER
                     : this.textAddress.KERNEL);
             if (tokens.size() > 1 && TokenTypes.isIntegerTokenType(tokens.get(1).getType())) {
                 this.textAddress.set(Binary.stringToInt(tokens.get(1).getValue())); // KENV 1/6/05
             }
-        } else if (direct == Directives.WORD || direct == Directives.HALF
-                || direct == Directives.BYTE || direct == Directives.FLOAT
-                || direct == Directives.DOUBLE) {
+        } else if (direct == Directive.WORD || direct == Directive.HALF
+                || direct == Directive.BYTE || direct == Directive.FLOAT
+                || direct == Directive.DOUBLE) {
             this.dataDirective = direct;
             if (passesDataSegmentCheck(token) && tokens.size() > 1) { // DPS
                 // 11/20/06, added text segment prohibition
                 storeNumeric(tokens, direct, errors);
             }
-        } else if (direct == Directives.ASCII || direct == Directives.ASCIIZ) {
+        } else if (direct == Directive.ASCII || direct == Directive.ASCIIZ) {
             this.dataDirective = direct;
             if (passesDataSegmentCheck(token)) {
                 storeStrings(tokens, direct, errors);
             }
-        } else if (direct == Directives.ALIGN) {
+        } else if (direct == Directive.ALIGN) {
             if (passesDataSegmentCheck(token)) {
                 if (tokens.size() != 2) {
                     errors.add(new ErrorMessage(token.getSourceMIPSprogram(),
@@ -776,7 +768,7 @@ public class Assembler {
                             (int) Math.pow(2, value)));
                 }
             }
-        } else if (direct == Directives.SPACE) {
+        } else if (direct == Directive.SPACE) {
             if (passesDataSegmentCheck(token)) {
                 if (tokens.size() != 2) {
                     errors.add(new ErrorMessage(token.getSourceMIPSprogram(),
@@ -794,7 +786,7 @@ public class Assembler {
                 int value = Binary.stringToInt(tokens.get(1).getValue()); // KENV 1/6/05
                 this.dataAddress.increment(value);
             }
-        } else if (direct == Directives.EXTERN) {
+        } else if (direct == Directive.EXTERN) {
             if (tokens.size() != 3) {
                 errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token.getSourceLine(),
                         token.getStartPos(), "\"" + token.getValue()
@@ -815,11 +807,11 @@ public class Assembler {
                         Symbol.DATA_SYMBOL, errors);
                 this.externAddress += size;
             }
-        } else if (direct == Directives.SET) {
+        } else if (direct == Directive.SET) {
             errors.add(new ErrorMessage(ErrorMessage.WARNING, token.getSourceMIPSprogram(), token
                     .getSourceLine(), token.getStartPos(),
                     "MARS currently ignores the .set directive."));
-        } else if (direct == Directives.GLOBL) {
+        } else if (direct == Directive.GLOBL) {
             if (tokens.size() < 2) {
                 errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token.getSourceLine(),
                         token.getStartPos(), "\"" + token.getValue()
@@ -844,7 +836,6 @@ public class Assembler {
             errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token.getSourceLine(), token
                     .getStartPos(), "\"" + token.getValue()
                     + "\" directive recognized but not yet implemented."));
-            return;
         }
     } // executeDirective()
 
@@ -879,13 +870,13 @@ public class Assembler {
     // This source code line, if syntactically correct, is a continuation of a
     // directive list begun on on previous line.
     private void executeDirectiveContinuation(TokenList tokens) {
-        Directives direct = this.dataDirective;
-        if (direct == Directives.WORD || direct == Directives.HALF || direct == Directives.BYTE
-                || direct == Directives.FLOAT || direct == Directives.DOUBLE) {
+        Directive direct = this.dataDirective;
+        if (direct == Directive.WORD || direct == Directive.HALF || direct == Directive.BYTE
+                || direct == Directive.FLOAT || direct == Directive.DOUBLE) {
             if (tokens.size() > 0) {
                 storeNumeric(tokens, direct, errors);
             }
-        } else if (direct == Directives.ASCII || direct == Directives.ASCIIZ) {
+        } else if (direct == Directive.ASCII || direct == Directive.ASCIIZ) {
             if (passesDataSegmentCheck(tokens.get(0))) {
                 storeStrings(tokens, direct, errors);
             }
@@ -895,7 +886,7 @@ public class Assembler {
     // //////////////////////////////////////////////////////////////////////////////////
     // Given token, find the corresponding Instruction object. If token was not
     // recognized as OPERATOR, there is a problem.
-    private ArrayList matchInstruction(Token token) {
+    private ArrayList<? extends Object> matchInstruction(Token token) {
         if (token.getType() != TokenTypes.OPERATOR) {
             if (token.getSourceMIPSprogram().getLocalMacroPool()
                     .matchesAnyMacroName(token.getValue()))
@@ -922,7 +913,7 @@ public class Assembler {
     // Can also handle "directive continuations", e.g. second or subsequent line
     // of a multiline list, which does not contain the directive token. Just pass the
     // current directive as argument.
-    private void storeNumeric(TokenList tokens, Directives directive, ErrorList errors) {
+    private void storeNumeric(TokenList tokens, Directive directive, ErrorList errors) {
         Token token = tokens.get(0);
         // A double-check; should have already been caught...removed ".word" exemption 11/20/06
         if (!passesDataSegmentCheck(token))
@@ -945,8 +936,8 @@ public class Assembler {
             // (integer directive AND integer value OR floating directive AND
             // (integer value OR floating value))
             // AND integer repetition value
-            if (!(Directives.isIntegerDirective(directive)
-                    && TokenTypes.isIntegerTokenType(valueToken.getType()) || Directives
+            if (!(DirectiveOld.isIntegerDirective(directive)
+                    && TokenTypes.isIntegerTokenType(valueToken.getType()) || DirectiveOld
                     .isFloatingDirective(directive)
                     && (TokenTypes.isIntegerTokenType(valueToken.getType()) || TokenTypes
                     .isFloatingTokenType(valueToken.getType())))
@@ -969,7 +960,7 @@ public class Assembler {
                             .set(this.alignToBoundary(this.dataAddress.get(), lengthInBytes));
                 }
                 for (int i = 0; i < repetitions; i++) {
-                    if (Directives.isIntegerDirective(directive)) {
+                    if (DirectiveOld.isIntegerDirective(directive)) {
                         storeInteger(valueToken, directive, errors);
                     } else {
                         storeRealNumber(valueToken, directive, errors);
@@ -1002,10 +993,10 @@ public class Assembler {
         // if not in ".word w : n" format, must just be list of one or more values.
         for (int i = tokenStart; i < tokens.size(); i++) {
             token = tokens.get(i);
-            if (Directives.isIntegerDirective(directive)) {
+            if (DirectiveOld.isIntegerDirective(directive)) {
                 storeInteger(token, directive, errors);
             }
-            if (Directives.isFloatingDirective(directive)) {
+            if (DirectiveOld.isFloatingDirective(directive)) {
                 storeRealNumber(token, directive, errors);
             }
         }
@@ -1017,7 +1008,7 @@ public class Assembler {
     // Called by storeNumeric()
     // NOTE: The token itself may be a label, in which case the correct action is
     // to store the address of that label (into however many bytes specified).
-    private void storeInteger(Token token, Directives directive, ErrorList errors) {
+    private void storeInteger(Token token, Directive directive, ErrorList errors) {
         int lengthInBytes = DataTypes.getLengthInBytes(directive);
         if (TokenTypes.isIntegerTokenType(token.getType())) {
             int value = Binary.stringToInt(token.getValue());
@@ -1026,9 +1017,9 @@ public class Assembler {
             // If value is out of range for the directive, will simply truncate
             // the leading bits (includes sign bits). This is what SPIM does.
             // But will issue a warning (not error) which SPIM does not do.
-            if (directive == Directives.BYTE) {
+            if (directive == Directive.BYTE) {
                 value = value & 0x000000FF;
-            } else if (directive == Directives.HALF) {
+            } else if (directive == Directive.HALF) {
                 value = value & 0x0000FFFF;
             }
 
@@ -1092,7 +1083,7 @@ public class Assembler {
     // //////////////////////////////////////////////////////////////////////////////
     // Store real (fixed or floating point) value given floating (float, double) directive.
     // Called by storeNumeric()
-    private void storeRealNumber(Token token, Directives directive, ErrorList errors) {
+    private void storeRealNumber(Token token, Directive directive, ErrorList errors) {
         int lengthInBytes = DataTypes.getLengthInBytes(directive);
         double value;
 
@@ -1121,10 +1112,10 @@ public class Assembler {
 
         // Value has been validated; let's store it.
 
-        if (directive == Directives.FLOAT) {
+        if (directive == Directive.FLOAT) {
             writeToDataSegment(Float.floatToIntBits((float) value), lengthInBytes, token, errors);
         }
-        if (directive == Directives.DOUBLE) {
+        if (directive == Directive.DOUBLE) {
             writeDoubleToDataSegment(value, token, errors);
         }
 
@@ -1134,7 +1125,7 @@ public class Assembler {
     // Use directive argument to distinguish between ASCII and ASCIIZ. The
     // latter stores a terminating null byte. Can handle a list of one or more
     // strings on a single line.
-    private void storeStrings(TokenList tokens, Directives direct, ErrorList errors) {
+    private void storeStrings(TokenList tokens, Directive direct, ErrorList errors) {
         Token token;
         // Correctly handles case where this is a "directive continuation" line.
         int tokenStart = 0;
@@ -1199,7 +1190,7 @@ public class Assembler {
                     }
                     this.dataAddress.increment(DataTypes.CHAR_SIZE);
                 }
-                if (direct == Directives.ASCIIZ) {
+                if (direct == Directive.ASCIIZ) {
                     try {
                         Globals.memory.set(this.dataAddress.get(), 0, DataTypes.CHAR_SIZE);
                     } catch (AddressErrorException e) {
@@ -1366,16 +1357,8 @@ public class Assembler {
     // - number of bytes (addresses are 4 bytes but may be used with any of
     // the integer directives: .word, .half, .byte)
     // - the label's token. Normally need only the name but error message needs more.
-    private class DataSegmentForwardReferences {
-        private final ArrayList forwardReferenceList;
-
-        private DataSegmentForwardReferences() {
-            forwardReferenceList = new ArrayList();
-        }
-
-        private int size() {
-            return forwardReferenceList.size();
-        }
+    private static class DataSegmentForwardReferences {
+        private final ArrayList<DataSegmentForwardReference> forwardReferenceList = new ArrayList<>();
 
         // Add a new forward reference entry. Client must supply the following:
         // - memory address to receive the label's address once resolved
@@ -1415,7 +1398,7 @@ public class Assembler {
                     // patch address has to be valid b/c we already stored there...
                     try {
                         Globals.memory.set(entry.patchAddress, labelAddress, entry.length);
-                    } catch (AddressErrorException aee) {
+                    } catch (AddressErrorException ignored) {
                     }
                     forwardReferenceList.remove(i);
                     i--; // needed because removal shifted the remaining list indices down
@@ -1429,8 +1412,8 @@ public class Assembler {
         // undefined labels.
         private void generateErrorMessages(ErrorList errors) {
             DataSegmentForwardReference entry;
-            for (int i = 0; i < forwardReferenceList.size(); i++) {
-                entry = (DataSegmentForwardReference) forwardReferenceList.get(i);
+            for (DataSegmentForwardReference dataSegmentForwardReference : forwardReferenceList) {
+                entry = dataSegmentForwardReference;
                 errors.add(new ErrorMessage(entry.token.getSourceMIPSprogram(), entry.token
                         .getSourceLine(), entry.token.getStartPos(), "Symbol \""
                         + entry.token.getValue() + "\" not found in symbol table."));
@@ -1438,7 +1421,7 @@ public class Assembler {
         }
 
         // inner-inner class to hold each entry of the forward reference list.
-        private class DataSegmentForwardReference {
+        private static class DataSegmentForwardReference {
             int patchAddress;
             int length;
             Token token;

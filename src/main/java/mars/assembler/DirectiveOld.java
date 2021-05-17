@@ -40,43 +40,43 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * @version August 2003
  **/
 
-public final class Directives {
+public final class DirectiveOld {
     private static final ArrayList directiveList = new ArrayList();
 
-    public static final Directives DATA = new Directives(".data", "Subsequent items stored in Data segment at next available address");
-    public static final Directives TEXT = new Directives(".text", "Subsequent items (instructions) stored in Text segment at next available address");
-    public static final Directives WORD = new Directives(".word", "Store the listed value(s) as 32 bit words on word boundary");
-    public static final Directives ASCII = new Directives(".ascii", "Store the string in the Data segment but do not add null terminator");
-    public static final Directives ASCIIZ = new Directives(".asciiz", "Store the string in the Data segment and add null terminator");
-    public static final Directives BYTE = new Directives(".byte", "Store the listed value(s) as 8 bit bytes");
-    public static final Directives ALIGN = new Directives(".align", "Align next data item on specified byte boundary (0=byte, 1=half, 2=word, 3=double)");
-    public static final Directives HALF = new Directives(".half", "Store the listed value(s) as 16 bit halfwords on halfword boundary");
-    public static final Directives SPACE = new Directives(".space", "Reserve the next specified number of bytes in Data segment");
-    public static final Directives DOUBLE = new Directives(".double", "Store the listed value(s) as double precision floating point");
-    public static final Directives FLOAT = new Directives(".float", "Store the listed value(s) as single precision floating point");
-    public static final Directives EXTERN = new Directives(".extern", "Declare the listed label and byte length to be a global data field");
-    public static final Directives KDATA = new Directives(".kdata", "Subsequent items stored in Kernel Data segment at next available address");
-    public static final Directives KTEXT = new Directives(".ktext", "Subsequent items (instructions) stored in Kernel Text segment at next available address");
-    public static final Directives GLOBL = new Directives(".globl", "Declare the listed label(s) as global to enable referencing from other files");
-    public static final Directives SET = new Directives(".set", "Set assembler variables.  Currently ignored but included for SPIM compatability");
+    public static final DirectiveOld DATA = new DirectiveOld(".data", "Subsequent items stored in Data segment at next available address");
+    public static final DirectiveOld TEXT = new DirectiveOld(".text", "Subsequent items (instructions) stored in Text segment at next available address");
+    public static final DirectiveOld WORD = new DirectiveOld(".word", "Store the listed value(s) as 32 bit words on word boundary");
+    public static final DirectiveOld ASCII = new DirectiveOld(".ascii", "Store the string in the Data segment but do not add null terminator");
+    public static final DirectiveOld ASCIIZ = new DirectiveOld(".asciiz", "Store the string in the Data segment and add null terminator");
+    public static final DirectiveOld BYTE = new DirectiveOld(".byte", "Store the listed value(s) as 8 bit bytes");
+    public static final DirectiveOld ALIGN = new DirectiveOld(".align", "Align next data item on specified byte boundary (0=byte, 1=half, 2=word, 3=double)");
+    public static final DirectiveOld HALF = new DirectiveOld(".half", "Store the listed value(s) as 16 bit halfwords on halfword boundary");
+    public static final DirectiveOld SPACE = new DirectiveOld(".space", "Reserve the next specified number of bytes in Data segment");
+    public static final DirectiveOld DOUBLE = new DirectiveOld(".double", "Store the listed value(s) as double precision floating point");
+    public static final DirectiveOld FLOAT = new DirectiveOld(".float", "Store the listed value(s) as single precision floating point");
+    public static final DirectiveOld EXTERN = new DirectiveOld(".extern", "Declare the listed label and byte length to be a global data field");
+    public static final DirectiveOld KDATA = new DirectiveOld(".kdata", "Subsequent items stored in Kernel Data segment at next available address");
+    public static final DirectiveOld KTEXT = new DirectiveOld(".ktext", "Subsequent items (instructions) stored in Kernel Text segment at next available address");
+    public static final DirectiveOld GLOBL = new DirectiveOld(".globl", "Declare the listed label(s) as global to enable referencing from other files");
+    public static final DirectiveOld SET = new DirectiveOld(".set", "Set assembler variables.  Currently ignored but included for SPIM compatability");
     /*  EQV added by DPS 11 July 2012 */
-    public static final Directives EQV = new Directives(".eqv", "Substitute second operand for first. First operand is symbol, second operand is expression (like #define)");
+    public static final DirectiveOld EQV = new DirectiveOld(".eqv", "Substitute second operand for first. First operand is symbol, second operand is expression (like #define)");
     /* MACRO and END_MACRO added by Mohammad Sekhavat Oct 2012 */
-    public static final Directives MACRO = new Directives(".macro", "Begin macro definition.  See .end_macro");
-    public static final Directives END_MACRO = new Directives(".end_macro", "End macro definition.  See .macro");
+    public static final DirectiveOld MACRO = new DirectiveOld(".macro", "Begin macro definition.  See .end_macro");
+    public static final DirectiveOld END_MACRO = new DirectiveOld(".end_macro", "End macro definition.  See .macro");
     /*  INCLUDE added by DPS 11 Jan 2013 */
-    public static final Directives INCLUDE = new Directives(".include", "Insert the contents of the specified file.  Put filename in quotes.");
+    public static final DirectiveOld INCLUDE = new DirectiveOld(".include", "Insert the contents of the specified file.  Put filename in quotes.");
     private final String descriptor;
     private final String description; // help text
 
-    private Directives() {
+    private DirectiveOld() {
         // private ctor assures no objects can be created other than those above.
         this.descriptor = "generic";
         this.description = "";
         directiveList.add(this);
     }
 
-    private Directives(String name, String description) {
+    private DirectiveOld(String name, String description) {
         this.descriptor = name;
         this.description = description;
         directiveList.add(this);
@@ -89,10 +89,10 @@ public final class Directives {
      * @return If match is found, returns matching Directives object, else returns <tt>null</tt>.
      **/
 
-    public static Directives matchDirective(String str) {
-        Directives match;
+    public static DirectiveOld matchDirective(String str) {
+        DirectiveOld match;
         for (int i = 0; i < directiveList.size(); i++) {
-            match = (Directives) directiveList.get(i);
+            match = (DirectiveOld) directiveList.get(i);
             if (str.equalsIgnoreCase(match.descriptor)) {
                 return match;
             }
@@ -112,7 +112,7 @@ public final class Directives {
     public static ArrayList prefixMatchDirectives(String str) {
         ArrayList matches = null;
         for (int i = 0; i < directiveList.size(); i++) {
-            if (((Directives) directiveList.get(i)).descriptor.toLowerCase().startsWith(str.toLowerCase())) {
+            if (((DirectiveOld) directiveList.get(i)).descriptor.toLowerCase().startsWith(str.toLowerCase())) {
                 if (matches == null) {
                     matches = new ArrayList();
                 }
@@ -137,8 +137,8 @@ public final class Directives {
      * @param direct a MIPS directive
      * @return true if given directive is FLOAT or DOUBLE, false otherwise
      **/
-    public static boolean isIntegerDirective(Directives direct) {
-        return direct == Directives.WORD || direct == Directives.HALF || direct == Directives.BYTE;
+    public static boolean isIntegerDirective(Directive direct) {
+        return direct == Directive.WORD || direct == Directive.HALF || direct == Directive.BYTE;
     }
 
     /**
@@ -147,8 +147,8 @@ public final class Directives {
      * @param direct a MIPS directive
      * @return true if given directive is FLOAT or DOUBLE, false otherwise.
      **/
-    public static boolean isFloatingDirective(Directives direct) {
-        return direct == Directives.FLOAT || direct == Directives.DOUBLE;
+    public static boolean isFloatingDirective(Directive direct) {
+        return direct == Directive.FLOAT || direct == Directive.DOUBLE;
     }
 
     /**
