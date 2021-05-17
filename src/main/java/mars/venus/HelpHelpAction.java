@@ -1,7 +1,7 @@
 package mars.venus;
 
 import mars.Globals;
-import mars.assembler.DirectiveOld;
+import mars.assembler.Directive;
 import mars.mips.instructions.Instruction;
 
 import javax.swing.*;
@@ -17,10 +17,7 @@ import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Vector;
+import java.util.*;
 	
 	/*
 Copyright (c) 2003-2008,  Pete Sanderson and Kenneth Vollmar
@@ -288,18 +285,18 @@ public class HelpHelpAction extends GuiAction {
 
     /////////////////////////////////////////////////////////////////////////////
     private JScrollPane createMipsDirectivesHelpPane() {
-        Vector exampleList = new Vector();
+        Vector<String> exampleList = new Vector<>();
         String blanks = "            ";  // 12 blanks
-        DirectiveOld direct;
-        Iterator it = DirectiveOld.getDirectiveList().iterator();
+        Directive direct;
+        Iterator<Directive> it = Arrays.stream(Directive.values()).iterator();
         while (it.hasNext()) {
-            direct = (DirectiveOld) it.next();
+            direct = it.next();
             exampleList.add(direct.toString()
                     + blanks.substring(0, Math.max(0, blanks.length() - direct.toString().length()))
                     + direct.getDescription());
         }
         Collections.sort(exampleList);
-        JList examples = new JList(exampleList);
+        JList<String> examples = new JList<>(exampleList);
         JScrollPane mipsScrollPane = new JScrollPane(examples, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                 JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         examples.setFont(new Font("Monospaced", Font.PLAIN, 12));

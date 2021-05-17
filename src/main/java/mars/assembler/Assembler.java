@@ -664,7 +664,7 @@ public class Assembler {
     // This source code line is a directive, not a MIPS instruction. Let's carry it out.
     private void executeDirective(TokenList tokens) {
         Token token = tokens.get(0);
-        Directive direct = Directive.Companion.getDirectiveFromToken(token.getValue());
+        Directive direct = Directive.Companion.matchDirective(token.getValue());
         if (Globals.debug)
             System.out.println("line " + token.getSourceLine() + " is directive " + direct);
         if (direct == Directive.EQV) { /* EQV added by DPS 11 July 2012 */
@@ -936,9 +936,9 @@ public class Assembler {
             // (integer directive AND integer value OR floating directive AND
             // (integer value OR floating value))
             // AND integer repetition value
-            if (!(DirectiveOld.isIntegerDirective(directive)
-                    && TokenTypes.isIntegerTokenType(valueToken.getType()) || DirectiveOld
-                    .isFloatingDirective(directive)
+            if (!(Directive.Companion.isIntegerDirective(directive)
+                    && TokenTypes.isIntegerTokenType(valueToken.getType())
+                    || Directive.Companion.isFloatingDirective(directive)
                     && (TokenTypes.isIntegerTokenType(valueToken.getType()) || TokenTypes
                     .isFloatingTokenType(valueToken.getType())))
                     || !TokenTypes.isIntegerTokenType(repetitionsToken.getType())) {
@@ -960,7 +960,7 @@ public class Assembler {
                             .set(this.alignToBoundary(this.dataAddress.get(), lengthInBytes));
                 }
                 for (int i = 0; i < repetitions; i++) {
-                    if (DirectiveOld.isIntegerDirective(directive)) {
+                    if (Directive.Companion.isIntegerDirective(directive)) {
                         storeInteger(valueToken, directive, errors);
                     } else {
                         storeRealNumber(valueToken, directive, errors);
@@ -993,14 +993,13 @@ public class Assembler {
         // if not in ".word w : n" format, must just be list of one or more values.
         for (int i = tokenStart; i < tokens.size(); i++) {
             token = tokens.get(i);
-            if (DirectiveOld.isIntegerDirective(directive)) {
+            if (Directive.Companion.isIntegerDirective(directive)) {
                 storeInteger(token, directive, errors);
             }
-            if (DirectiveOld.isFloatingDirective(directive)) {
+            if (Directive.Companion.isFloatingDirective(directive)) {
                 storeRealNumber(token, directive, errors);
             }
         }
-        return;
     } // storeNumeric()
 
     // //////////////////////////////////////////////////////////////////////////////

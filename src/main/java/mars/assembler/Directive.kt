@@ -1,7 +1,5 @@
 package mars.assembler
 
-import java.util.*
-
 enum class Directive(val directiveName: String, val description: String) {
     DATA(".data", "Subsequent items stored in Data segment at next available address"),
     TEXT(".text", "Subsequent items (instructions) stored in Text segment at next available address"),
@@ -25,9 +23,31 @@ enum class Directive(val directiveName: String, val description: String) {
     END_MACRO(".end_macro", "End macro definition.  See .macro"),
     INCLUDE(".include", "Insert the contents of the specified file.  Put filename in quotes.");
 
+    override fun toString(): String {
+        return directiveName
+    }
+
     companion object {
-        fun getDirectiveFromToken(token: String): Directive {
-            return values().first { it.directiveName == token }
+        fun matchDirective(token: String): Directive? {
+            return values().firstOrNull { it.directiveName == token }
+        }
+
+        fun prefixMatchDirectives(token: String): List<Directive> {
+            return values().filter { it.directiveName.startsWith(token) }
+        }
+
+        /**
+         * @return true if the directive is for an integer (word, half-word, or byte)
+         */
+        fun isIntegerDirective(directive: Directive): Boolean {
+            return directive == WORD || directive == HALF || directive == BYTE
+        }
+
+        /**
+         * @return true if the directive is for a floating point number (float, double)
+         */
+        fun isFloatingDirective(directive: Directive): Boolean {
+            return directive == FLOAT || directive == DOUBLE
         }
     }
 }

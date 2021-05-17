@@ -5,6 +5,8 @@ import mars.mips.hardware.Coprocessor1;
 import mars.mips.hardware.Register;
 import mars.mips.hardware.RegisterFile;
 import mars.util.Binary;
+
+import java.util.Arrays;
 	
 	/*
 Copyright (c) 2003-2008,  Pete Sanderson and Kenneth Vollmar
@@ -215,7 +217,7 @@ public final class TokenTypes {
             return TokenTypes.OPERATOR;
 
         // See if it is a directive
-        if (value.charAt(0) == '.' && DirectiveOld.matchDirective(value) != null) {
+        if (value.charAt(0) == '.' && Arrays.stream(Directive.values()).map(Directive::getDirectiveName).anyMatch(value::equals)) {
             return TokenTypes.DIRECTIVE;
         }
 
