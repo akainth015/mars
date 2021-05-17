@@ -374,18 +374,6 @@ public class Settings extends Observable {
      * on defaults stored in this class.
      */
     public Settings() {
-        this(true);
-    }
-    /**
-     * Create Settings object and set to saved values.  If saved values not found, will set
-     * based on defaults stored in Settings.properties file.  If file problems, will set based
-     * on defaults stored in this class.
-     *
-     * @param gui true if running the graphical IDE, false if running from command line.
-     *            Ignored as of release 3.6 but retained for compatability.
-     */
-
-    public Settings(boolean gui) {
         booleanSettingsValues = new boolean[booleanSettingsKeys.length];
         stringSettingsValues = new String[stringSettingsKeys.length];
         fontFamilySettingsValues = new String[fontFamilySettingsKeys.length];

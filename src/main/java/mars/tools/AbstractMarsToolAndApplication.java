@@ -13,7 +13,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Observable;
@@ -142,7 +141,7 @@ public abstract class AbstractMarsToolAndApplication extends JFrame implements M
         theWindow = this;
         this.isBeingUsedAsAMarsTool = false;
         thisMarsApp.setTitle(this.title);
-        mars.Globals.initialize(true);
+        mars.Globals.initialize();
         // assure the dialog goes away if user clicks the X
         thisMarsApp.addWindowListener(
                 new WindowAdapter() {

@@ -351,7 +351,7 @@ public class BHTSimulator extends AbstractMarsToolAndApplication implements Acti
 
             try {
                 // access the statement in the text segment without notifying other tools etc.
-                ProgramStatement stmt = Memory.getInstance().getStatementNoNotify(memAccNotice.getAddress());
+                ProgramStatement stmt = Memory.INSTANCE.getStatementNoNotify(memAccNotice.getAddress());
 
                 // necessary to handle possible null pointers at the end of the program
                 // (e.g., if the simulator tries to execute the next instruction after the last instruction in the text segment)

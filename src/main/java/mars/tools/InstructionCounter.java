@@ -198,7 +198,7 @@ public class InstructionCounter extends AbstractMarsToolAndApplication {
         lastAddress = a;
         counter++;
         try {
-            ProgramStatement stmt = Memory.getInstance().getStatement(a);
+            ProgramStatement stmt = Memory.INSTANCE.getStatement(a);
             BasicInstruction instr = (BasicInstruction) stmt.getInstruction();
             BasicInstructionFormat format = instr.getInstructionFormat();
             if (format == BasicInstructionFormat.R_FORMAT)

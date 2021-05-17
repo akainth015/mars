@@ -55,7 +55,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  **/
 
 public class MarsLaunch {
-
     private static final String rangeSeparator = "-";
     private static final int splashDuration = 2000; // time in MS to show splash screen
     private static final int memoryWordsPerLine = 4; // display 4 memory words, tab separated, per line
@@ -136,7 +135,7 @@ public class MarsLaunch {
 
     public MarsLaunch(String[] args) {
         boolean gui = (args.length == 0);
-        Globals.initialize(gui);
+        Globals.initialize();
         if (gui) {
             launchIDE();
         } else { // running from command line.
@@ -158,7 +157,7 @@ public class MarsLaunch {
             registerDisplayList = new ArrayList();
             memoryDisplayList = new ArrayList();
             filenameList = new ArrayList();
-            MemoryConfigurations.setCurrentConfiguration(MemoryConfigurations.getDefaultConfiguration());
+            MemoryConfigurations.INSTANCE.setCurrentConfiguration(MemoryConfigurations.getDefaultConfiguration());
             // do NOT use Globals.program for command line MARS -- it triggers 'backstep' log.
             code = new MIPSprogram();
             maxSteps = -1;
@@ -306,7 +305,7 @@ public class MarsLaunch {
                     argsOK = false;
                 } else {
                     if (dumpTriples == null)
-                        dumpTriples = new ArrayList();
+                        dumpTriples = new ArrayList<String[]>();
                     dumpTriples.add(new String[]{args[++i], args[++i], args[++i]});
                     //simulate = false;
                 }
@@ -315,19 +314,14 @@ public class MarsLaunch {
             if (args[i].equalsIgnoreCase("mc")) {
                 String configName = args[++i];
                 MemoryConfiguration config = MemoryConfigurations.getConfigurationByName(configName);
-                if (config == null) {
-                    out.println("Invalid memory configuration: " + configName);
-                    argsOK = false;
-                } else {
-                    MemoryConfigurations.setCurrentConfiguration(config);
-                }
+                MemoryConfigurations.INSTANCE.setCurrentConfiguration(config);
                 continue;
             }
             // Set MARS exit code for assemble error
             if (args[i].toLowerCase().indexOf("ae") == 0) {
                 String s = args[i].substring(2);
                 try {
-                    assembleErrorExitCode = Integer.decode(s).intValue();
+                    assembleErrorExitCode = Integer.decode(s);
                     continue;
                 } catch (NumberFormatException nfe) {
                     // Let it fall thru and get handled by catch-all
@@ -337,7 +331,7 @@ public class MarsLaunch {
             if (args[i].toLowerCase().indexOf("se") == 0) {
                 String s = args[i].substring(2);
                 try {
-                    simulateErrorExitCode = Integer.decode(s).intValue();
+                    simulateErrorExitCode = Integer.decode(s);
                     continue;
                 } catch (NumberFormatException nfe) {
                     // Let it fall thru and get handled by catch-all
@@ -542,8 +536,8 @@ public class MarsLaunch {
             // NOTE: I will use homegrown decoder, because Integer.decode will throw
             // exception on address higher than 0x7FFFFFFF (e.g. sign bit is 1).
             if (Binary.stringToInt(memoryRange[0]) > Binary.stringToInt(memoryRange[1]) ||
-                    !Memory.wordAligned(Binary.stringToInt(memoryRange[0])) ||
-                    !Memory.wordAligned(Binary.stringToInt(memoryRange[1]))) {
+                    Memory.isUnaligned(Binary.stringToInt(memoryRange[0])) ||
+                    Memory.isUnaligned(Binary.stringToInt(memoryRange[1]))) {
                 throw new NumberFormatException();
             }
         }
@@ -820,6 +814,9 @@ public class MarsLaunch {
         out.println("Options used here do not affect MARS Settings menu values and vice versa.");
     }
 
+    public static void main(String[] args) {
+        new MarsLaunch(args);
+    }
 }
    	
    	

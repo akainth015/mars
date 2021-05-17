@@ -825,12 +825,12 @@ public class DataSegmentWindow extends JInternalFrame implements Observer {
                 // Simulated MIPS execution starts.  Respond to memory changes if running in timed
                 // or stepped mode.
                 if (notice.getRunSpeed() != RunSpeedPanel.UNLIMITED_SPEED || notice.getMaxSteps() == 1) {
-                    Memory.getInstance().addObserver(this);
+                    Memory.INSTANCE.addObserver(this);
                     addressHighlighting = true;
                 }
             } else {
                 // Simulated MIPS execution stops.  Stop responding.
-                Memory.getInstance().deleteObserver(this);
+                Memory.INSTANCE.deleteObserver(this);
             }
         } else if (observable == settings) {
             // Suspended work in progress. Intended to disable combobox item for text segment. DPS 9-July-2013.

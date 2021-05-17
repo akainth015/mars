@@ -96,7 +96,7 @@ public class SystemIO {
         }
 
         // Client is responsible for catching NumberFormatException
-        return new Integer(input.trim()).intValue();
+        return new Integer(input.trim());
     }
 
 
@@ -113,7 +113,7 @@ public class SystemIO {
         if (Globals.getGui() == null) {
             try {
                 input = getInputReader().readLine();
-            } catch (IOException e) {
+            } catch (IOException ignored) {
             }
         } else {
             if (Globals.getSettings().getBooleanSetting(Settings.POPUP_SYSCALL_INPUT)) {
@@ -123,7 +123,7 @@ public class SystemIO {
                 input = Globals.getGui().getMessagesPane().getInputString(-1);
             }
         }
-        return new Float(input.trim()).floatValue();
+        return new Float(input.trim());
 
     }
 
@@ -141,7 +141,7 @@ public class SystemIO {
         if (Globals.getGui() == null) {
             try {
                 input = getInputReader().readLine();
-            } catch (IOException e) {
+            } catch (IOException ignored) {
             }
         } else {
             if (Globals.getSettings().getBooleanSetting(Settings.POPUP_SYSCALL_INPUT)) {
@@ -151,7 +151,7 @@ public class SystemIO {
                 input = Globals.getGui().getMessagesPane().getInputString(-1);
             }
         }
-        return new Double(input.trim()).doubleValue();
+        return new Double(input.trim());
 
     }
 
@@ -354,7 +354,7 @@ public class SystemIO {
      * IMPLEMENTED.  Also note that file permission modes are also NOT IMPLEMENTED.
      *
      * @param filename string containing filename
-     * @param flag     0 for read, 1 for write
+     * @param flags     0 for read, 1 for write
      * @return file descriptor in the range 0 to SYSCALL_MAXFILES-1, or -1 if error
      * @author Ken Vollmar
      */

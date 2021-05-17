@@ -161,13 +161,13 @@ public class Globals {
      * Method called once upon system initialization to create the global data structures.
      **/
 
-    public static void initialize(boolean gui) {
+    public static void initialize() {
         if (!initialized) {
-            memory = Memory.getInstance();  //clients can use Memory.getInstance instead of Globals.memory
+            memory = Memory.INSTANCE;
             instructionSet = new InstructionSet();
             instructionSet.populate();
             symbolTable = new SymbolTable("global");
-            settings = new Settings(gui);
+            settings = new Settings();
             initialized = true;
             debug = false;
             memory.clear(); // will establish memory configuration from setting

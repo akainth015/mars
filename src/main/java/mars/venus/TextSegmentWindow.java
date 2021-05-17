@@ -385,7 +385,7 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
                 // for that.  So we'll pretend to be Memory observable and send it a fake memory write update.
                 try {
                     Globals.getGui().getMainPane().getExecutePane().getDataSegmentWindow()
-                            .update(Memory.getInstance(), new MemoryAccessNotice(AccessNotice.WRITE, address, value));
+                            .update(Memory.INSTANCE, new MemoryAccessNotice(AccessNotice.WRITE, address, value));
                 } catch (Exception e) {
                     // Not sure if anything bad can happen in this sequence, but if anything does we can let it go.
                 }
@@ -632,7 +632,7 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
      */
     private void addAsTextSegmentObserver() {
         try {
-            Memory.getInstance().addObserver(this, Memory.textBaseAddress, Memory.dataSegmentBaseAddress);
+            Memory.INSTANCE.addObserver(this, Memory.textBaseAddress, Memory.dataSegmentBaseAddress);
         } catch (AddressErrorException aee) {
         }
     }
@@ -641,7 +641,7 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
      *  Little convenience method to remove this as observer of text segment
      */
     private void deleteAsTextSegmentObserver() {
-        Memory.getInstance().deleteObserver(this);
+        Memory.INSTANCE.deleteObserver(this);
     }
 
     /*
@@ -654,8 +654,7 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
         int[] savedColumnOrder = Globals.getSettings().getTextColumnOrder();
         // Apply ordering only if correct number of columns.
         if (savedColumnOrder.length == table.getColumnCount()) {
-            for (int i = 0; i < savedColumnOrder.length; i++)
-                newtcm.addColumn(oldtcm.getColumn(savedColumnOrder[i]));
+            for (int j : savedColumnOrder) newtcm.addColumn(oldtcm.getColumn(j));
             table.setColumnModel(newtcm);
         }
     }
