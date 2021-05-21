@@ -30,7 +30,7 @@ import java.util.Hashtable;
  *
  * @author Slava Pestov
  * @version $Id: InputHandler.java,v 1.14 1999/12/13 03:40:30 sp Exp $
- * @see org.syntax.jedit.DefaultInputHandler
+ * @see DefaultInputHandler
  * <p>
  * 08/12/2002	Clipboard actions	(Oliver Henning)
  */
@@ -195,7 +195,7 @@ public abstract class InputHandler extends KeyAdapter {
      * Grabs the next key typed event and invokes the specified
      * action with the key as a the action command.
      *
-     * @param action The action
+     * @param listener The action
      */
     public void grabNextKeyStroke(ActionListener listener) {
         grabAction = listener;

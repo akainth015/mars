@@ -24,7 +24,7 @@
   *
   * @author Slava Pestov
   * @version $Id: TokenMarker.java,v 1.32 1999/12/13 03:40:30 sp Exp $
-  * @see org.syntax.jedit.Token
+  * @see Token
   */
  public abstract class TokenMarker {
      /**
@@ -206,7 +206,7 @@
       *
       * @param line      String containing current line
       * @param tokenList first Token on the current line
-      * @param token     the pertinent Token object
+      * @param tokenAtOffset     the pertinent Token object
       * @param tokenText the source String that matched to the token
       * @return ArrayList containing PopupHelpItem objects, one per match.
       */

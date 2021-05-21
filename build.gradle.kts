@@ -10,5 +10,5 @@ repositories {
 application {
     mainModule.set("mars.main")
     mainClass.set("mars.Mars")
-    version = "4.5"
+    version = "4.6"
 }
