@@ -8,6 +8,7 @@ repositories {
 }
 
 application {
-    mainClass.set("Mars")
+    mainModule.set("mars.main")
+    mainClass.set("mars.Mars")
     version = "4.5"
 }

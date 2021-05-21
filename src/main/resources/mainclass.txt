@@ -1,2 +1,2 @@
-Main-Class: Mars
+Main-Class: mars.Mars
 Class-Path: .
